@@ -1,2 +1,5 @@
 venv
 .env
+networksecurity/__pycache__
+logs
+test_mongodb.py
