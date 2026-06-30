@@ -17,5 +17,10 @@ class NetworkSecurityException(Exception):
         )
     
 
-
+if __name__=='__main__':
+    try:
+        logger.logging.info("Enter the try block")
+        a=1/0
+    except Exception as e:
+        raise NetworkSecurityException(e,sys)
 
