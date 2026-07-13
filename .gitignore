@@ -1,5 +1,16 @@
-venv
+# Python virtual environments and local configuration
+venv/
+.venv/
 .env
-networksecurity/__pycache__
-logs
-test_mongodb.py
+
+# Python bytecode and caches (at any module depth)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Generated pipeline outputs, trained models, and runtime logs
+Artifacts/
+final_model/
+logs/
+
+
