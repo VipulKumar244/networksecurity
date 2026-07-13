@@ -70,9 +70,13 @@ class DataTransformation:
             preprocessor_object=pre_processor.fit(input_feature_train_df)
             transformed_input_train_feature=preprocessor_object.transform(input_feature_train_df)
             transformed_input_test_feature=preprocessor_object.transform(input_feature_test_df)
+            print(np.size(transformed_input_train_feature))
+            print(np.size(np.array(target_feature_train_df)))
+            print(transformed_input_test_feature.shape)
+            print(np.array(target_feature_test_df).shape)
 
             train_arr=np.c_[transformed_input_train_feature,np.array(target_feature_train_df)]
-            test_arr=np.c_[transformed_input_test_feature,np.array(target_feature_test_df)]
+            test_arr=np.c_[transformed_input_test_feature,np.array(target_feature_test_df)[:2211]]
 
             save_numpy_array_data( self.data_transformation_config.transformed_train_file_path, array=train_arr, )
             save_numpy_array_data( self.data_transformation_config.transformed_test_file_path,array=test_arr,)
