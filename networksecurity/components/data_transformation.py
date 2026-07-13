@@ -54,7 +54,7 @@ class DataTransformation:
     def initiate_data_transformation(self)->DataTransformationArtifact:
         logging.info("Entered initiate_data_transformation")
         try:
-            train_df=DataTransformation.read_data(self.data_validation_artifact.valid_test_file_path)
+            train_df=DataTransformation.read_data(self.data_validation_artifact.valid_train_file_path)
             test_df=DataTransformation.read_data(self.data_validation_artifact.valid_test_file_path)
 
             input_feature_train_df=train_df.drop(columns=[TARGET_COLUMN])
