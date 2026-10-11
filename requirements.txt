@@ -1,13 +1,18 @@
 python-dotenv
-pandas
-numpy
+pandas==2.3.3
+numpy==2.4.6
 setuptools
 pymongo
 certifi
 pymongo[srv]==3.12
-scikit-learn
+scikit-learn==1.9.0
 dill
 pyaml
 mlflow
-
+dagshub
+fastapi
+uvicorn
+python-multipart
+jinja2
+streamlit
 ##-e .

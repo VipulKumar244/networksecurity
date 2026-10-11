@@ -9,11 +9,11 @@ import sys
 import numpy as np
 import pandas as pd
 import pymongo
-from typing import List
 from sklearn.model_selection import train_test_split
 from dotenv import load_dotenv
 load_dotenv()
 MONGO_DB_URL=os.getenv("MONGO_DB_URL")
+LOCAL_DATA_FILE_PATH = os.path.join("Network_Data", "phisingData.csv")
 
 
 class DataIngestion:
@@ -28,10 +28,20 @@ class DataIngestion:
         try:
             database_name=self.data_ingestion_config.database_name
             collection_name=self.data_ingestion_config.collection_name
+            if not MONGO_DB_URL:
+                if not os.path.exists(LOCAL_DATA_FILE_PATH):
+                    raise FileNotFoundError(
+                        f"MONGO_DB_URL is not set and local data file was not found: {LOCAL_DATA_FILE_PATH}"
+                    )
+                return pd.read_csv(LOCAL_DATA_FILE_PATH)
+
             self.mongo_client=pymongo.MongoClient(MONGO_DB_URL)
             collection=self.mongo_client[database_name][collection_name]
 
             df=pd.DataFrame(list(collection.find()))
+            if df.empty and os.path.exists(LOCAL_DATA_FILE_PATH):
+                logging.warning("MongoDB collection is empty; using the local CSV dataset")
+                df = pd.read_csv(LOCAL_DATA_FILE_PATH)
             if not df.empty:
                 dropped=[col for col in ["_id","Id"]if col in df.columns]
                 if dropped:
@@ -41,6 +51,12 @@ class DataIngestion:
                 
 
         except Exception as e:
+            if os.path.exists(LOCAL_DATA_FILE_PATH):
+                logging.warning("MongoDB ingestion failed; using the local CSV dataset: %s", e)
+                dataframe = pd.read_csv(LOCAL_DATA_FILE_PATH)
+                dataframe.drop(columns=[col for col in ["_id", "Id"] if col in dataframe], inplace=True)
+                dataframe.replace({"na": np.nan}, inplace=True)
+                return dataframe
             raise NetworkSecurityException(e,sys)
 
     def export_data_into_feature_store(self,dataframe:pd.DataFrame):
@@ -56,8 +72,14 @@ class DataIngestion:
 
     def split_data_as_train_test(self,dataframe:pd.DataFrame):
         try:
+            target_column = "Result"
+            stratify = dataframe[target_column] if target_column in dataframe.columns else None
             train_set,test_set=train_test_split(
-                dataframe,test_size=self.data_ingestion_config.train_test_split_ratio)
+                dataframe,
+                test_size=self.data_ingestion_config.train_test_split_ratio,
+                random_state=42,
+                stratify=stratify,
+            )
             
             logging.info("Performed train test split on the dataframe")
             logging.info("Exited split_data_as_train_test method of Data_Ingestion class")
@@ -82,6 +104,8 @@ class DataIngestion:
     def initiate_data_ingestion(self):
         try:
             dataframe=self.export_collection_as_dataframe()
+            if dataframe.empty:
+                raise ValueError("No training records were found in the configured data source")
             dataframe=self.export_data_into_feature_store(dataframe)
             self.split_data_as_train_test(dataframe)
             data_ingestion_artifact=DataIngestionArtifact(trained_file_path=self.data_ingestion_config.training_file_path,
